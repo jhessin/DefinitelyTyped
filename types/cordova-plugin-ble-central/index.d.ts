@@ -1,8 +1,9 @@
-// Type definitions for cordova-plugin-ble-central 1.2.2
+// Type definitions for cordova-plugin-ble-central 1.3.1
 // Project: https://github.com/don/cordova-plugin-ble-central
 // Definitions by: Gidon Junge <https://github.com/gjunge>
 //                 Philip Peitsch <https://github.com/peitschie>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+// TypeScript Version: 2.1
 
 
 declare namespace BLECentralPlugin {
@@ -39,22 +40,55 @@ declare namespace BLECentralPlugin {
         reportDuplicates?: boolean;
     }
 
-    export interface BLECentralPluginStatic {
+    interface BLECentralPluginCommon {
         scan(services: string[], seconds: number, success : (data: PeripheralData) => any, failure? : (error: string) => any): void;
 
         startScan(services: string[], success: (data: PeripheralData) => any, failure?: (error: string|BLEError) => any): void;
 
         startScanWithOptions(services: string[], options: StartScanOptions, success: (data: PeripheralData) => any, failure?: (error: string) => any): void;
 
+        connect(device_id:string, connectCallback: (data: PeripheralDataExtended) => any, disconnectCallback: (error: string|BLEError) => any): void;
+
+        /* Register to be notified when the value of a characteristic changes. */
+        startNotification(device_id: string, service_uuid:string, characteristic_uuid:string, success: (rawData: ArrayBuffer) => any, failure?: (error: string|BLEError) => any): void;
+
+        startStateNotifications(success: (state: string) => any, failure?: (error: string) => any): void;
+    }
+
+
+
+    export interface BLECentralPluginPromises extends BLECentralPluginCommon {
+        stopScan() : Promise<void>;
+        disconnect(device_id: string) : Promise<void>;
+        read(device_id: string, service_uuid: string, characteristic_uuid: string) : Promise<ArrayBuffer>;
+        write(device_id: string, service_uuid: string, characteristic_uuid: string, value: ArrayBuffer): Promise<void>;
+        writeWithoutResponse(device_id: string, service_uuid: string, characteristic_uuid: string, value: ArrayBuffer): Promise<void>;
+        stopNotification(device_id: string, service_uuid: string, characteristic_uuid: string): Promise<void>;
+
+        /* Returns a rejected promise if the device is not connected */
+        isConnected(device_id: string): Promise<void>;
+
+        /* Returns a rejected promise if bluetooth is not connected */
+        isEnabled(): Promise<void>;
+
+        enable(): Promise<void>;
+        showBluetoothSettings(): Promise<void>;
+        stopStateNotifications(): Promise<void>;
+        readRSSI(device_id: string): Promise<number>;
+    }
+
+    export interface BLECentralPluginStatic extends BLECentralPluginCommon {
+        /* sets the pin when device requires it.
+           [iOS] setPin is not supported on iOS. */
+        setPin(pin: string, success?: () => any, failure?: (error: string|BLEError) => any): void;
+
         stopScan(): void;
         stopScan(success: () => any, failure?: () => any): void;
-
-        connect(device_id:string, success: (data: PeripheralDataExtended) => any, failure: (error: string|BLEError) => any): void;
 
         /* Automatically connect to a device when it is in range of the phone
            [iOS] background notifications on ios must be enabled if you want to run in the background
            [Android] this relies on the autoConnect argument of BluetoothDevice.connectGatt(). Not all Android devices implement this feature correctly. */
-        autoConnect(device_id:string, success: (data: PeripheralDataExtended) => any, failure: (error: string|BLEError) => any): void;
+        autoConnect(device_id:string, connectCallback: (data: PeripheralDataExtended) => any, disconnectCallback: (error: string|BLEError) => any): void;
 
         disconnect(device_id:string, success?: () => any, failure?: (error: string|BLEError) => any): void;
 
@@ -66,13 +100,14 @@ declare namespace BLECentralPlugin {
         The success callback is be called when the characteristic is written.*/
         writeWithoutResponse(device_id: string, service_uuid:string, characteristic_uuid:string, data: ArrayBuffer, success?: () => any, failure?: (error: string) => any): void;
 
-        /* Register to be notified when the value of a characteristic changes. */
-        startNotification(device_id: string, service_uuid:string, characteristic_uuid:string, success: (rawData: ArrayBuffer) => any, failure?: (error: string|BLEError) => any): void;
-
         stopNotification(device_id: string, service_uuid:string, characteristic_uuid:string, success?: () => any, failure?: (error: string|BLEError) => any): void;
 
         /* Reports if bluetooth is enabled. */
         isEnabled(success: () => any , failure: (error: string) => any): void;
+
+        /* Reports if location services are enabled.
+           [iOS] isLocationEnabled is not supported on iOS. */
+        isLocationEnabled(success: () => any , failure: (error: string) => any): void;
 
         /* Calls the success callback when the peripheral is connected and the failure callback when not connected. */
         isConnected(device_id: string, success: () => any, failure?: (error: string) => any): void;
@@ -81,12 +116,14 @@ declare namespace BLECentralPlugin {
            [iOS] requestMtu is not supported on iOS. */
         requestMtu(device_id: string, mtu: number, success?: () => any, failure?: () => any): void;
 
+        /* When Connecting to a peripheral android can request for the connection priority for better communication.
+           [iOS] requestConnectionPriority is not supported on iOS. */
+        requestConnectionPriority(device_id: string, priority: "high"|"balanced"|"low", success?: () => any, failure?: () => any): void;
+
         /* Clears cached services and characteristics info for some poorly behaved devices. Uses an undocumented API,
         so it is not guaranteed to work.
            [iOS] refreshDeviceCache is not supported on iOS. */
         refreshDeviceCache(device_id: string, timeout_millis: number, success?: (data: PeripheralDataExtended) => any, failure?: (error: string|BLEError) => any): void;
-
-        startStateNotifications(success: (state: string) => any, failure?: (error: string) => any): void;
 
         stopStateNotifications(success?: () => any, failure?: () => any): void;
 
@@ -113,6 +150,8 @@ declare namespace BLECentralPlugin {
         /* Find the bonded devices.
            [iOS] bondedDevices is not supported on iOS. */
         bondedDevices(success: (data: PeripheralData[]) => any, failure: () => any): void;
+
+        withPromises: BLECentralPluginPromises;
     }
 }
 

@@ -1,4 +1,4 @@
-// Type definitions for google-protobuf 3.7
+// Type definitions for google-protobuf 3.15
 // Project: https://github.com/google/google-protobuf
 // Definitions by: Marcus Longmuir <https://github.com/marcuslongmuir>
 //                 Chaitanya Kamatham <https://github.com/kamthamc>
@@ -9,7 +9,7 @@ type ScalarFieldType = boolean | number | string;
 type RepeatedFieldType = ScalarFieldType[] | Uint8Array[];
 type AnyFieldType = ScalarFieldType | RepeatedFieldType | Uint8Array;
 type FieldValue = string | number | boolean | Uint8Array | FieldValueArray | undefined;
-interface FieldValueArray extends Array<FieldValue> {} // tslint:disable-line no-empty-interface
+interface FieldValueArray extends Array<FieldValue> {}
 
 export abstract class Message {
   getJsPbMessageId(): (string | undefined);
@@ -110,8 +110,8 @@ export abstract class Message {
   static equals(m1: Message, m2: Message): boolean;
   static compareExtensions(extension1: {}, extension2: {}): boolean;
   static compareFields(field1: any, field2: any): boolean;
-  cloneMessage(): Message;
-  clone(): Message;
+  cloneMessage(): this;
+  clone(): this;
   static clone<T extends Message>(msg: T): T;
   static cloneMessage<T extends Message>(msg: T): T;
   static copyInto(fromMessage: Message, toMessage: Message): void;

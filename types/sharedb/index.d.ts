@@ -2,11 +2,18 @@
 // Project: https://github.com/share/sharedb
 // Definitions by: Steve Oney <https://github.com/soney>
 //                 Eric Hwang <https://github.com/ericyhwang>
+//                 Peter Xu <https://github.com/pxpeterxu>
+//                 Alec Gibson <https://github.com/alecgibson>
+//                 Christina Burger <https://github.com/pypmannetjies>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.1
+// TypeScript Version: 3.0
 
 /// <reference path="lib/sharedb.d.ts" />
 
+import { Duplex } from 'stream';
+import { EventEmitter } from 'events';
+import Agent = require('./lib/agent');
+import { Connection } from './lib/client';
 import * as ShareDB from './lib/sharedb';
 
 interface PubSubOptions {
@@ -18,9 +25,41 @@ interface Stream {
 
 export = sharedb;
 
-declare class sharedb {
-    constructor(options?: {db?: any, pubsub?: sharedb.PubSub, disableDocAction?: boolean, disableSpaceDelimitedActions?: boolean});
-    connect: (connection?: any, req?: any) => sharedb.Connection;
+declare class sharedb extends EventEmitter {
+    db: sharedb.DB;
+    pubsub: sharedb.PubSub;
+    extraDbs: {[extraDbName: string]: sharedb.ExtraDB};
+    milestoneDb?: sharedb.MilestoneDB;
+
+    constructor(options?: {
+        db?: any,
+        pubsub?: sharedb.PubSub,
+        extraDbs?: {[extraDbName: string]: sharedb.ExtraDB},
+        milestoneDb?: sharedb.MilestoneDB,
+        suppressPublish?: boolean,
+        maxSubmitRetries?: number,
+
+        presence?: boolean,
+        /**
+         * @deprecated disableDocAction was removed in v1.0
+         */
+        disableDocAction?: boolean,
+        /**
+         * @deprecated disableSpaceDelimitedActions was removed in v1.0
+         */
+        disableSpaceDelimitedActions?: boolean
+    });
+    /**
+     * Creates a server-side connection to ShareDB.
+     *
+     * This is almost always called with no arguments.
+     *
+     * @param connection optional existing connection to re-bind to this `Backend`.
+     * @param req optional request context for the new connection. See `#listen` for details.
+     *
+     * @see https://github.com/share/sharedb#client-api
+     */
+    connect(connection?: Connection, req?: any): Connection;
     /**
      * Registers a projection that can be used from clients just like a normal collection.
      *
@@ -29,8 +68,17 @@ declare class sharedb {
      * @param fields field whitelist for the projection
      */
     addProjection(name: string, collection: string, fields: ProjectionFields): void;
-    listen(stream: any): void;
-    close(callback?: (err?: Error) => any): void;
+    /**
+     * Registers a new `Duplex` stream with the backend. This should be called when the server
+     * receives a new connection from a client.
+     *
+     * @param stream duplex stream for exchanging data with the new client
+     * @param request optional request that initiated the new connection, e.g. a HTTP request. This
+     *   is passed to any "connect" middleware listeners, which can use it for inspecting cookies
+     *   or session info.
+     */
+    listen(stream: Duplex, request?: any): Agent;
+    close(callback?: BasicCallback): void;
     /**
      * Registers a server middleware function.
      *
@@ -41,31 +89,49 @@ declare class sharedb {
         action: A,
         fn: (context: sharedb.middleware.ActionContextMap[A], callback: (err?: any) => void) => void,
     ): void;
-    static types: {
-        register: (type: { name?: string, uri?: string, [key: string]: any}) => void;
-    };
+
+    on(event: 'timing', callback: (type: string, time: number, request: any) => void): this;
+    on(event: 'submitRequestEnd', callback: (error: Error, request: SubmitRequest) => void): this;
+    on(event: 'error', callback: (err: Error) => void): this;
+    on(event: 'send', callback: (agent: Agent, response: ShareDB.ServerResponseSuccess | ShareDB.ServerResponseError) => void): this;
+
+    addListener(event: 'timing', callback: (type: string, time: number, request: any) => void): this;
+    addListener(event: 'submitRequestEnd', callback: (error: Error, request: SubmitRequest) => void): this;
+    addListener(event: 'error', callback: (err: Error) => void): this;
+
+    static types: ShareDB.Types;
+    static logger: ShareDB.Logger;
 }
 
 declare namespace sharedb {
     abstract class DB {
         projectsSnapshots: boolean;
         disableSubscribe: boolean;
-        close(callback?: () => void): void;
-        commit(collection: string, id: string, op: Op, snapshot: any, options: any, callback: (...args: any[]) => any): void;
+        close(callback?: BasicCallback): void;
+        commit(collection: string, id: string, op: any, snapshot: any, options: any, callback: (...args: any[]) => any): void;
         getSnapshot(collection: string, id: string, fields: any, options: any, callback: (...args: any[]) => any): void;
-        getSnapshotBulk(collection: string, ids: string, fields: any, options: any, callback: (...args: any[]) => any): void;
-        getOps(collection: string, id: string, from: number, to: number, options: any, callback: (...args: any[]) => any): void;
-        getOpsToSnapshot(collection: string, id: string, from: number, snapshot: number, options: any, callback: (...args: any[]) => any): void;
+        getSnapshotBulk(collection: string, ids: string[], fields: any, options: any, callback: (...args: any[]) => any): void;
+        getOps(collection: string, id: string, from: number | null, to: number | null, options: any, callback: (...args: any[]) => any): void;
+        getOpsToSnapshot(collection: string, id: string, from: number | null, snapshot: number, options: any, callback: (...args: any[]) => any): void;
         getOpsBulk(collection: string, fromMap: any, toMap: any, options: any, callback: (...args: any[]) => any): void;
         getCommittedOpVersion(collection: string, id: string, snapshot: any, op: any, options: any, callback: (...args: any[]) => any): void;
-        query(collection: string, query: Query, fields: any, options: any, callback: (...args: any[]) => any): void;
-        queryPoll(collection: string, query: Query, options: any, callback: (...args: any[]) => any): void;
-        queryPollDoc(collection: string, id: string, query: Query, options: any, callback: (...args: any[]) => any): void;
+        query: DBQueryMethod;
+        queryPoll(collection: string, query: any, options: any, callback: (...args: any[]) => any): void;
+        queryPollDoc(collection: string, id: string, query: any, options: any, callback: (...args: any[]) => any): void;
         canPollDoc(): boolean;
         skipPoll(): boolean;
     }
 
     class MemoryDB extends DB { }
+
+    // The DBs in `extraDbs` are only ever used for queries, so they don't need the other DB methods.
+    interface ExtraDB {
+        query: DBQueryMethod;
+        close(callback?: BasicCallback): void;
+    }
+
+    type DBQueryMethod = (collection: string, query: any, fields: ProjectionFields | undefined, options: any, callback: DBQueryCallback) => void;
+    type DBQueryCallback = (err: Error | null, snapshots: Snapshot[], extra?: any) => void;
 
     abstract class PubSub {
         private static shallowCopy(obj: any): any;
@@ -90,16 +156,32 @@ declare namespace sharedb {
         private _removeStream(channel, stream): void;
     }
 
+    abstract class MilestoneDB {
+        close(callback?: BasicCallback): void;
+        getMilestoneSnapshot(collection: string, id: string, version: number, callback?: BasicCallback): void;
+        saveMilestoneSnapshot(collection: string, snapshot: Snapshot, callback?: BasicCallback): void;
+        getMilestoneSnapshotAtOrBeforeTime(collection: string, id: string, timestamp: number, callback?: BasicCallback): void;
+        getMilestoneSnapshotAtOrAfterTime(collection: string, id: string, timestamp: number, callback?: BasicCallback): void;
+    }
+
+    /**
+     * @deprecated Use the `Connection` type from 'sharedb/lib/client' instead, as that's where it
+     *   lives in the actual source code.
+     */
     class Connection {
-        constructor(ws: WebSocket);
+        constructor(socket: ShareDB.Socket);
         get(collectionName: string, documentID: string): ShareDB.Doc;
         createFetchQuery(collectionName: string, query: string, options: {results?: ShareDB.Query[]}, callback: (err: Error, results: any) => any): ShareDB.Query;
         createSubscribeQuery(collectionName: string, query: string, options: {results?: ShareDB.Query[]}, callback: (err: Error, results: any) => any): ShareDB.Query;
     }
     type Doc = ShareDB.Doc;
+    type Snapshot = ShareDB.Snapshot;
     type Query = ShareDB.Query;
     type Error = ShareDB.Error;
     type Op = ShareDB.Op;
+    type CreateOp = ShareDB.CreateOp;
+    type DeleteOp = ShareDB.DeleteOp;
+    type EditOp = ShareDB.EditOp;
     type AddNumOp = ShareDB.AddNumOp;
     type ListMoveOp = ShareDB.ListMoveOp;
     type ListInsertOp = ShareDB.ListInsertOp;
@@ -117,11 +199,18 @@ declare namespace sharedb {
 
     namespace middleware {
         interface ActionContextMap {
+            /**
+             * @deprecated use 'afterWrite' instead
+             */
             afterSubmit: SubmitContext;
+            afterWrite: SubmitContext;
             apply: ApplyContext;
             commit: CommitContext;
             connect: ConnectContext;
-            doc: DocContext;  // Deprecated, use 'readSnapshots' instead.
+            /**
+             * @deprecated use 'readSnapshots' instead
+             */
+            doc: DocContext;
             op: OpContext;
             query: QueryContext;
             readSnapshots: ReadSnapshotsContext;
@@ -132,7 +221,7 @@ declare namespace sharedb {
 
         interface BaseContext {
             action: keyof ActionContextMap;
-            agent: any;
+            agent: Agent;
             backend: sharedb;
         }
 
@@ -150,13 +239,13 @@ declare namespace sharedb {
         interface DocContext extends BaseContext {
             collection: string;
             id: string;
-            snapshot: ShareDB.Snapshot;
+            snapshot: Snapshot;
         }
 
         interface OpContext extends BaseContext {
             collection: string;
             id: string;
-            op: ShareDB.Op;
+            op: any;
         }
 
         interface QueryContext extends BaseContext {
@@ -173,7 +262,7 @@ declare namespace sharedb {
 
         interface ReadSnapshotsContext extends BaseContext {
             collection: string;
-            snapshots: ShareDB.Snapshot[];
+            snapshots: Snapshot[];
             snapshotType: SnapshotType;
         }
 
@@ -207,16 +296,21 @@ interface SubmitRequest {
     projection: Projection | undefined;
     collection: string;
     id: string;
-    op: sharedb.Op;
+    op: sharedb.CreateOp | sharedb.DeleteOp | sharedb.EditOp;
     options: any;
     start: number;
+    extra: {
+        source?: any;
+    };
 
     saveMilestoneSnapshot: boolean | null;
     suppressPublish: boolean | null;
     maxRetries: number | null;
     retries: number;
 
-    snapshot: ShareDB.Snapshot | null;
-    ops: ShareDB.Op[];
+    snapshot: sharedb.Snapshot | null;
+    ops: any[];
     channels: string[] | null;
 }
+
+type BasicCallback = (err?: Error) => void;

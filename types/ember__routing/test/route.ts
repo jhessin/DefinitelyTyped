@@ -16,7 +16,7 @@ Route.extend({
 
 Route.extend({
     afterModel(posts: Posts, transition: Transition) {
-        if (posts.length === 1) {
+        if (posts.firstObject) {
             this.transitionTo('post.show', posts.firstObject);
         }
     },
@@ -61,6 +61,14 @@ Route.extend({
 });
 
 Route.extend({
+    controllerName: 'photos',
+    templateName: 'anOutletName',
+    renderTemplate() {
+        this.render(); // Render using defaults
+    },
+});
+
+Route.extend({
     renderTemplate(controller: Controller, model: {}) {
         this.render('posts', {
             view: 'someView', // the template to render, referenced by name
@@ -73,9 +81,10 @@ Route.extend({
 });
 
 Route.extend({
-    resetController(controller: Controller, isExiting: boolean, transition: boolean) {
+    resetController(controller: Controller, isExiting: boolean, transition: Transition) {
         if (isExiting) {
             //   controller.set('page', 1);
+            transition.abort();
         }
     },
 });
@@ -89,10 +98,58 @@ class RedirectRoute extends Route {
 }
 
 class InvalidRedirect extends Route {
-    redirect(model: {}, a: Transition, anOddArg: any) { // $ExpectError
+    // $ExpectError
+    redirect(model: {}, a: Transition, anOddArg: any) {
         if (!model) {
             this.transitionTo('there');
         }
+    }
+}
+
+class TransitionToExamples extends Route {
+    // NOTE: this one won't check that `queryParams` has the right shape,
+    // because the overload for the version where `models` are passed
+    // necessarily includes all objects.
+    transitionToModelAndQP() {
+        // $ExpectType Transition<unknown>
+        this.transitionTo('somewhere', { queryParams: { neat: true } });
+    }
+
+    transitionToJustQP() {
+        // $ExpectType Transition<unknown>
+        this.transitionTo({ queryParams: { neat: 'true' } });
+    }
+
+    transitionToNonsense() {
+        this.transitionTo({ cannotDoModelHere: true }); // $ExpectError
+    }
+
+    transitionToBadQP() {
+        this.transitionTo({ queryParams: 12 }); // $ExpectError
+    }
+
+    transitionToId() {
+        // $ExpectType Transition<unknown>
+        this.transitionTo('blog-post', 1);
+    }
+
+    transitionToIdWithQP() {
+        // $ExpectType Transition<unknown>
+        this.transitionTo('blog-post', 1, { queryParams: { includeComments: true } });
+    }
+
+    transitionToIds() {
+        // $ExpectType Transition<unknown>
+        this.transitionTo('blog-comment', 1, '13');
+    }
+
+    transitionToIdsWithQP() {
+        // $ExpectType Transition<unknown>
+        this.transitionTo('blog-comment', 1, '13', { queryParams: { includePost: true } });
+    }
+
+    buildRouteInfoMetadata() {
+        return { foo: 'bar' };
     }
 }
 
@@ -104,9 +161,10 @@ declare module '@ember/controller' {
 }
 
 Route.extend({
-    setupController(controller: Controller, model: {}) {
+    setupController(controller: Controller, model: {}, transition: Transition) {
         this._super(controller, model);
         this.controllerFor('application').set('model', model);
+        transition.abort();
     },
 });
 
@@ -123,9 +181,84 @@ class RouteUsingClass extends Route.extend({
         this.intermediateTransitionTo('some-route');
     }
     intermediateTransitionWithModel() {
-        this.intermediateTransitionTo('some.other.route', { });
+        this.intermediateTransitionTo('some.other.route', {});
     }
     intermediateTransitionWithMultiModel() {
-        this.intermediateTransitionTo('some.other.route', 1, 2, { });
+        this.intermediateTransitionTo('some.other.route', 1, 2, {});
+    }
+}
+
+interface ExampleModel { id: string; }
+
+class TypedRoute extends Route<ExampleModel> {
+    model(params: any): ExampleModel | PromiseLike<ExampleModel> {
+        if (params.usePromise) {
+          return { id: '123' };
+        } else {
+          const promise: PromiseLike<ExampleModel> = new Promise((resolve) => resolve({ id: '123'}));
+          return promise;
+        }
+    }
+
+    serialize(model: ExampleModel): string {
+        return model.id;
+    }
+
+    afterModel(model: ExampleModel): void {
+        if (model.id === 'new') {
+            this.transitionTo('some.other.route');
+        }
+    }
+
+    redirect(model: ExampleModel): void {
+        if (model.id === 'new') {
+            this.transitionTo('some.other.route');
+        }
+    }
+
+    setupController(controller: Controller, model: ExampleModel, transition: Transition) {
+        controller.set('model', model);
+    }
+
+    renderTemplate(controller: Controller, model: ExampleModel) {
+        this.render('template', { model });
+    }
+}
+
+interface InvalidModel { id: number; }
+
+class InvalidTypedRoute extends Route<ExampleModel> {
+    // $ExpectError
+    model(params: any): InvalidModel {
+      return { id: 123 };
+    }
+
+    // $ExpectError
+    serialize(model: InvalidModel): number {
+        return model.id;
+    }
+
+    // $ExpectError
+    afterModel(model: InvalidModel): void {
+        if (model.id === 0) {
+            this.transitionTo('some.other.route');
+        }
+    }
+
+    // $ExpectError
+    redirect(model: InvalidModel): void {
+        if (model.id === 0) {
+            this.transitionTo('some.other.route');
+        }
+    }
+
+    // $ExpectError
+    setupController(controller: Controller, model: InvalidModel, transition: Transition) {
+        controller.set('model', model);
+    }
+
+    // $ExpectError
+    renderTemplate(controller: Controller, model: InvalidModel) {
+        this.render('template', { model });
     }
 }

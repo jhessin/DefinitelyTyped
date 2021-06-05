@@ -1,4 +1,4 @@
-import { ComponentType } from '@wordpress/element';
+import { ComponentType } from 'react';
 
 declare namespace BlockAlignmentToolbar {
     type Control = 'center' | 'full' | 'left' | 'right' | 'wide';
@@ -7,7 +7,7 @@ declare namespace BlockAlignmentToolbar {
         controls?: Control[];
         isCollapsed?: boolean;
         onChange(newValue: Control | undefined): void;
-        value: Control;
+        value: Control | undefined;
     }
 }
 

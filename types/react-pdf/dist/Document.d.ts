@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { PDFDocumentProxy } from 'pdfjs-dist';
 
 export type RenderFunction = () => JSX.Element;
 
@@ -43,6 +44,11 @@ export interface Props {
     inputRef?: React.LegacyRef<HTMLDivElement>;
 
     /**
+     * The path used to prefix the src attributes of annotation SVGs.
+     */
+    imageResourcesPath?: string;
+
+    /**
      * Defines what the component should display while loading.
      * @default 'Loading PDF…'
      */
@@ -68,7 +74,7 @@ export interface Props {
     /**
      * Function called when the document is successfully loaded.
      */
-    onLoadSuccess?: (pdf: any) => void;
+    onLoadSuccess?: (pdf: PDFDocumentProxy) => void;
 
     /**
      * Function called when a password-protected PDF is loaded.
@@ -105,6 +111,8 @@ export interface Props {
      * 90 = rotated to the right, 180 = upside down, 270 = rotated to the left.
      */
     rotate?: number;
+
+    children?: React.ReactNode;
 }
 
 export default class Document extends React.Component<Props> { }

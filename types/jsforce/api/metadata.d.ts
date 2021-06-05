@@ -1,7 +1,6 @@
 import { Callback, Connection } from '../connection';
 import { EventEmitter } from 'events';
 import { Stream } from 'stream';
-import { Buffer } from 'buffer';
 
 interface DeployResult {
     id: string;
@@ -27,11 +26,11 @@ interface DeployResult {
 }
 
 interface MetadataObject {
-    childXmlNames: string[];
-    directoryName: string;
-    inFolder: boolean;
-    metaFile: boolean;
-    suffix: string;
+    childXmlNames?: string[];
+    directoryName?: string;
+    inFolder?: boolean;
+    metaFile?: boolean;
+    suffix?: string;
     xmlName: string;
 }
 
@@ -102,10 +101,15 @@ interface RetrieveRequest {
     unpackaged?: Package;
 }
 
+interface RetrieveMessage {
+    fileName: string;
+    problem: string;
+}
+
 interface RetrieveResult {
     fileProperties: FileProperties[];
     id: string;
-    messages: object[];
+    messages: RetrieveMessage[];
     zipFile: string
 }
 
@@ -134,16 +138,16 @@ interface AsyncResult {
 }
 
 interface DeployOptions {
-    allowMissingFiles?:	boolean;
+    allowMissingFiles?:    boolean;
     autoUpdatePackage?: boolean;
-    checkOnly?:	boolean;
+    checkOnly?:    boolean;
     ignoreWarnings?: boolean;
     performRetrieve?: boolean;
     purgeOnDelete?: boolean;
     rollbackOnError?: boolean;
     runAllTests?: boolean;
     runTests?: string[];
-    singlePackage?:	boolean;
+    singlePackage?:    boolean;
 }
 
 export class AsyncResultLocator<T> extends EventEmitter implements PromiseLike<T> {

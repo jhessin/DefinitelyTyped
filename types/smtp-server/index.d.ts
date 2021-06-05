@@ -3,6 +3,7 @@
 // Definitions by: markisme <https://github.com/markisme>
 //                 taisiias <https://github.com/Taisiias>
 //                 Piotr Roszatycki <https://github.com/dex4er>
+//                 Paul Oms <https://github.com/paul-oms>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 3.3
 
@@ -58,7 +59,7 @@ export interface SMTPServerAuthenticationResponse {
      * and this value is used later with the session data to identify the user.
      * If this value is empty, then the authentication is considered failed
      */
-    user: any;
+    user?: any;
     /**
      * an object to return if XOAUTH2 authentication failed (do not set the error object in this case).
      * This value is serialized to JSON and base64 encoded automatically, so you can just return the object
@@ -111,6 +112,11 @@ export interface SMTPServerSession {
     transmissionType: string;
 
     tlsOptions: tls.TlsOptions;
+
+    /*
+    * Optional parameter that is added to the session object if provided to the onAuth callback
+    */
+    user?: string;
 }
 
 export interface SMTPServerDataStream extends PassThrough {
@@ -149,12 +155,6 @@ export interface SMTPServerOptions extends tls.TlsOptions {
     secure?: boolean;
     /** indicate an TLS server where TLS is handled upstream */
     secured?: boolean;
-    /** optional private keys in PEM format */
-    key?: string | string[] | Buffer | Buffer[] | Array<{ pem: string | Buffer, passphrase: string }>;
-    /** optional cert chains in PEM format */
-    cert?: string | string[] | Buffer | Buffer[];
-    /** optionally override the trusted CA certificates */
-    ca?: string | string[] | Buffer | Buffer[];
     /**
      * optional hostname of the server,
      * used for identifying to the client (defaults to os.hostname())
@@ -312,7 +312,7 @@ export class SMTPServer extends EventEmitter {
     listen(handle: any, listeningListener?: () => void): net.Server; // tslint:disable-line unified-signatures
 
     /** Closes the server */
-    close(callback: () => void): void;
+    close(callback?: () => void): void;
 
     updateSecureContext(options: tls.TlsOptions): void;
 

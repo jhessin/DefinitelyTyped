@@ -10,16 +10,22 @@ import {
     createRuleTester,
     RuleTesterContext,
     RuleTesterResult,
-    Plugin
-} from "stylelint";
+    Plugin,
+    Warning,
+} from 'stylelint';
 
 const options: Partial<LinterOptions> = {
     code: "div { color: red }",
     files: ["**/**.scss"],
     formatter: "json",
+    globbyOptions: {
+        cwd: "./"
+    },
     cache: true,
     cacheLocation: "./stylelint.cache.json",
     ignoreDisables: true,
+    reportDescriptionlessDisables: true,
+    reportInvalidScopeDisables: true,
     reportNeedlessDisables: true,
     ignorePath: 'foo',
     syntax: "scss"
@@ -29,6 +35,9 @@ lint(options).then((x: LinterResult) => {
     const err: boolean = x.errored;
     const output: string = x.output;
     const results: LintResult[] = x.results;
+    if (results.length > 0) {
+        const warnings: Warning[] = results[0].warnings;
+    }
 });
 
 const formatter: FormatterType = "json";

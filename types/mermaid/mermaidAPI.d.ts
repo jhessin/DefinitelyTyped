@@ -11,6 +11,12 @@ declare namespace mermaidAPI {
 
     interface FlowChartConfig {
         /**
+         * **diagramPadding** - amount of padding around the diagram as a whole
+         * default: 8
+         */
+        diagramPadding?: number;
+
+        /**
          * **htmlLabels** - Flag for setting whether or not a html tag should be used for rendering labels
          * on the edges
          * default: true
@@ -18,9 +24,32 @@ declare namespace mermaidAPI {
         htmlLabels?: boolean;
 
         /**
-         * default: 'linear'
+         * **nodeSpacing** - Defines the spacing between nodes on the same level
+         * default: 50
+         */
+        nodeSpacing?: number;
+
+        /**
+         * **rankSpacing** - Defines the spacing between nodes on different levels
+         * default: 50
+         */
+        rankSpacing?: number;
+
+        /**
+         * default: 'monotoneX'
          */
         curve?: string;
+
+        /**
+         * **rankSpacing** - Only used in new experimental rendering, represents the padding between the labels and the shape
+         * default: 15
+         */
+        padding?: number;
+
+        /**
+         * default: true
+         */
+        useMaxWidth?: boolean;
     }
 
     interface SequenceDiagramConfig {
@@ -97,9 +126,15 @@ declare namespace mermaidAPI {
          * default: true
          */
         useMaxWidth?: boolean;
+
+        /**
+         * This will display arrows that start and begin at the same node as right angles, rather than a curve
+         * Default value: false
+         */
+        rightAngles?: boolean;
     }
 
-    interface GnattConfig {
+    interface GanttConfig {
         /**
          * **titleTopMargin** - margin top for the text over the gantt diagram
          * default: 25
@@ -162,7 +197,21 @@ declare namespace mermaidAPI {
     }
 
     interface Config {
+        /**
+         * securityLevel: disallow/allow potentially dangerous cross-site scripting behavior
+         *   the two documented values are "strict" and "loose", i.e. disallow and allow
+         *   default: "strict"
+         *   If the value is not present, the default behavior is "strict"
+         *   Up through version mermaid@8.2.3, if any text value is present in a config but is not "strict", the behavior is "loose".
+         *   This should be fixed after that version, i.e. any value other "loose" should be treated as "strict".
+         */
+        securityLevel?: string;
+
         theme?: Theme;
+
+        maxTextSize?: number;
+
+        fontFamily?: string;
 
         /**
          * logLevel , decides the amount of logging to be used.
@@ -183,6 +232,12 @@ declare namespace mermaidAPI {
          */
         arrowMarkerAbsolute?: boolean;
 
+        secure?: Array<keyof Config>;
+
+        deterministicIds?: boolean;
+
+        deterministicIDSeed?: string;
+
         /**
          * ### flowchart
          * *The object containing configurations specific for flowcharts*
@@ -199,7 +254,7 @@ declare namespace mermaidAPI {
          * ### gantt
          * The object containing configurations specific for gantt diagrams*
          */
-        gnatt?: GnattConfig;
+        gantt?: GanttConfig;
 
         class?: any;
         git?: any;
@@ -231,11 +286,11 @@ declare namespace mermaidAPI {
     function render(
         id: string,
         txt: string,
-        cb: (
+        cb?: (
             svgCode: string,
             bindFunctions: (element: Element) => void
         ) => void,
-        container?: string
+        container?: Element
     ): string;
 
     function parse(text: string): any;

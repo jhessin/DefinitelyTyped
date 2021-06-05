@@ -1,14 +1,22 @@
-// Type definitions for stylelint 9.10
+// Type definitions for stylelint 13.13
 // Project: https://github.com/stylelint/stylelint, https://stylelint.io
 // Definitions by: Alan Agius <https://github.com/alan-agius4>
 //                 Filips Alpe <https://github.com/filipsalpe>
 //                 James Garbutt <https://github.com/43081j>
+//                 Bob Matcuk <https://github.com/bmatcuk>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.2
 
+import { GlobbyOptions } from 'globby';
 import * as postcss from 'postcss';
 
-export type FormatterType = "json" | "string" | "verbose" | "compact" | "unix";
+export type FormatterType =
+    | "json"
+    | "string"
+    | "verbose"
+    | "compact"
+    | "unix"
+    | ((results: LintResult[]) => string);
 
 export type SyntaxType = "css-in-js"
     | "html"
@@ -18,13 +26,15 @@ export type SyntaxType = "css-in-js"
     | "scss"
     | "sugarss";
 
+export type Severity = "warning" | "error";
+
 export interface Configuration {
     rules: Record<string, any>;
     extends: string | string[];
     plugins: string[];
     processors: string[];
     ignoreFiles: string|string[];
-    defaultSeverity: "warning"|"error";
+    defaultSeverity: Severity;
 }
 
 export interface LinterOptions {
@@ -41,9 +51,12 @@ export interface LinterOptions {
     files: string | string[];
     fix: boolean;
     formatter: FormatterType;
+    globbyOptions: GlobbyOptions;
     ignoreDisables: boolean;
     ignorePath: string;
     maxWarnings: number;
+    reportDescriptionlessDisables: boolean;
+    reportInvalidScopeDisables: boolean;
     reportNeedlessDisables: boolean;
     syntax: SyntaxType;
 }
@@ -54,11 +67,19 @@ export interface LinterResult {
     results: LintResult[];
 }
 
+export interface Warning {
+    line: number;
+    column: number;
+    rule: string;
+    severity: Severity;
+    text: string;
+}
+
 export interface LintResult {
     source: string;
     errored: boolean | undefined;
     ignored: boolean | undefined;
-    warnings: string[];
+    warnings: Warning[];
     deprecations: string[];
     invalidOptionWarnings: any[];
 }

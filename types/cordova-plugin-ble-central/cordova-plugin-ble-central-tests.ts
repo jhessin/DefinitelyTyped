@@ -58,12 +58,14 @@ var demoExtendedData : BLECentralPlugin.PeripheralDataExtended = {
     ]
 };
 
+const common : BLECentralPlugin.BLECentralPluginPromises | BLECentralPlugin.BLECentralPluginStatic = ble;
 
 //get updates about the bluethooth states
-ble.startStateNotifications((state) => log(`BLE state ${state}`));
-ble.startStateNotifications((state) => log(`BLE state ${state}`), (err: string) => log(`things when wrong ${err}`));
+common.startStateNotifications((state) => log(`BLE state ${state}`));
+common.startStateNotifications((state) => log(`BLE state ${state}`), (err: string) => log(`things when wrong ${err}`));
 
 ble.isEnabled(()=> log(`bluetooth is enabled`), err =>log(`bluetooth is not enabled: ${err}`));
+ble.isLocationEnabled(()=> log(`isLocationEnabled is enabled`), err =>log(`isLocationEnabled is not enabled: ${err}`));
 
 //here we try to enable bluetooth
 ble.enable(() => log(`yes it worked, or it was already enabled `), err => log(`nope it didn't work, the user pressed cancel, or we are in iOS: ${err}`));
@@ -76,18 +78,18 @@ ble.stopStateNotifications(() => log(`yes it worked`))
 ble.stopStateNotifications(() => log(`yes it worked`), () => log(`nope it didn't work`))
 
 //scan 5 seconds
-ble.scan([], 5000, (data) => { devices.push(data); });
-ble.scan([], 5000, (data) => { devices.push(data); }, () => log(`couldn't connect`) );
-ble.scan([], 5000, (data) => { devices.push(data); }, err => log(`couldn't connect: ${err}`) );
+common.scan([], 5000, (data) => { devices.push(data); });
+common.scan([], 5000, (data) => { devices.push(data); }, () => log(`couldn't connect`) );
+common.scan([], 5000, (data) => { devices.push(data); }, err => log(`couldn't connect: ${err}`) );
 
 //scan continously
-ble.startScan([], (data) => { devices.push(data); })
-ble.startScan([], (data) => { devices.push(data); }, () => log('couldn\'t connect')  )
-ble.startScan([], (data) => { devices.push(data); }, err => log(`couldn't connect: ${err}`) );
+common.startScan([], (data) => { devices.push(data); })
+common.startScan([], (data) => { devices.push(data); }, () => log('couldn\'t connect')  )
+common.startScan([], (data) => { devices.push(data); }, err => log(`couldn't connect: ${err}`) );
 
 ////scan continously
-ble.startScanWithOptions([], {reportDuplicates:false }, (data) => { devices.push(data); });
-ble.startScanWithOptions([], {reportDuplicates:false }, (data) => { devices.push(data); }, err => log(`couldn't connect: ${err}`));
+common.startScanWithOptions([], {reportDuplicates:false }, (data) => { devices.push(data); });
+common.startScanWithOptions([], {reportDuplicates:false }, (data) => { devices.push(data); }, err => log(`couldn't connect: ${err}`));
 
 //stop scanning
 ble.stopScan(()=> log('all good'), ()=> log('couldn\'t stop scanning'));
@@ -98,7 +100,7 @@ ble.isConnected(demoDevice.id, () => log(`already connected to this device`), ()
 
 //connect to a specific device
 var extendedData : BLECentralPlugin.PeripheralDataExtended;
-ble.connect(demoDevice.id, (data)=> extendedData = data, err => log(`couldn't connect to the device: ${err}`) );
+common.connect(demoDevice.id, (data)=> extendedData = data, err => log(`couldn't connect to the device: ${err}`) );
 
 //read some data from a characteristic
 var charsOfOneOfItsServices = demoExtendedData.characteristics.filter((value) => value.service == demoExtendedData.services[0]);
@@ -115,6 +117,12 @@ ble.requestMtu(demoDevice.id, 10);
 ble.requestMtu(demoDevice.id, 10, () => log('it worked'));
 ble.requestMtu(demoDevice.id, 10, () => log('it worked'), () => log('it failed'));
 
+
+// request mtu
+ble.requestConnectionPriority(demoDevice.id, "high");
+ble.requestConnectionPriority(demoDevice.id, "balanced", () => log('it worked'));
+ble.requestConnectionPriority(demoDevice.id, "low", () => log('it worked'), () => log('it failed'));
+
 // refreshDeviceCache
 ble.refreshDeviceCache(demoDevice.id, 10);
 ble.refreshDeviceCache(demoDevice.id, 10, () => log('it worked'));
@@ -122,9 +130,9 @@ ble.refreshDeviceCache(demoDevice.id, 10, () => log('it worked'), () => log('it 
 
 var notificationsReceived : number = 0;
 //get notified of changes for that characteristic
-ble.startNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic,
+common.startNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic,
     (data)=> notificationsReceived++);
-ble.startNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic,
+common.startNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic,
     (data)=> notificationsReceived++, err => log(`darn: ${err}`));
 
 //write some data
@@ -141,9 +149,29 @@ ble.stopNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfO
 ble.stopNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic, () => log('it worked'));
 ble.stopNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic, () => log('it worked'), () => log('it failed'));
 
+//setPin
+ble.setPin("abc");
+ble.setPin("abc", () => log('it worked'));
+ble.setPin("abc", () => log('it worked'), () => log('it failed'));
+
 //notificationsReceived == 1
 
 //just disconnect
 ble.disconnect(demoDevice.id);
 ble.disconnect(demoDevice.id, () => log('it worked'));
 ble.disconnect(demoDevice.id, () => log('it worked'), () => log('it failed'));
+
+async function withPromises() {
+    await ble.withPromises.stopScan();
+    await ble.withPromises.disconnect(demoDevice.id);
+    await ble.withPromises.read(demoDevice.id, charsOfOneOfItsServices[0].service,  charsOfOneOfItsServices[0].characteristic);
+    await ble.withPromises.write(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic, new ArrayBuffer(40));
+    await ble.withPromises.writeWithoutResponse(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic, new ArrayBuffer(40));
+    await ble.withPromises.stopNotification(demoDevice.id, charsOfOneOfItsServices[0].service, charsOfOneOfItsServices[0].characteristic);
+    await ble.withPromises.isConnected(demoDevice.id);
+    await ble.withPromises.isEnabled();
+    await ble.withPromises.enable();
+    await ble.withPromises.showBluetoothSettings();
+    await ble.withPromises.stopStateNotifications();
+    await ble.withPromises.readRSSI(demoDevice.id);
+}

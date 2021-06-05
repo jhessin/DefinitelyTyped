@@ -2,6 +2,7 @@
 // Project: https://github.com/rails/rails/tree/master/actioncable/app/assets/javascripts
 // Definitions by: Vincent Zhu <https://github.com/zhu1230>
 //                 Jared Szechy <https://github.com/szechyjs>
+//                 David Mejorado <https://github.com/davidmh>
 // Definitions: https://github.com/zhu1230/DefinitelyTyped
 // TypeScript Version: 2.3
 
@@ -13,7 +14,7 @@ declare module ActionCable {
   }
 
   interface Subscriptions {
-    create(channel: string|ChannelNameWithParams, obj: CreateMixin): Channel;
+    create<T extends CreateMixin>(channel: string|ChannelNameWithParams, obj?: T & ThisType<Channel>): Channel & T;
   }
 
   interface Cable {
@@ -25,10 +26,10 @@ declare module ActionCable {
   }
 
   interface CreateMixin {
-    connected(): void;
-    disconnected(): void;
-    received(obj: any): void;
-    [key: string]: Function;
+    connected?(): void;
+    disconnected?(): void;
+    received?(obj: any): void;
+    [key: string]: any;
   }
 
   interface ChannelNameWithParams {

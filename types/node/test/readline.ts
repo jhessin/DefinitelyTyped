@@ -32,6 +32,10 @@ const rl: readline.ReadLine = readline.createInterface(new stream.Readable());
             callback(null, [['test'], 'test']);
         }
     });
+    result = readline.createInterface({
+        input,
+        tabSize: 4
+    });
 }
 
 {
@@ -44,7 +48,12 @@ const rl: readline.ReadLine = readline.createInterface(new stream.Readable());
 }
 
 {
+    rl.getPrompt(); // $ExpectType string
+}
+
+{
     rl.question("query", (answer: string) => {});
+    rl.question("query", { signal: new AbortSignal() }, (answer: string) => {});
 }
 
 {
@@ -72,12 +81,24 @@ const rl: readline.ReadLine = readline.createInterface(new stream.Readable());
 }
 
 {
+    const data: string | Buffer = "test";
+    rl.line; // $ExpectType string
+    rl.cursor; // $ExpectType number
+
+    rl.write(data);
+
+    rl.line; // $ExpectType string
+    rl.cursor; // $ExpectType number
+}
+
+{
     const strm: NodeJS.WritableStream = new stream.Writable();
     const x = 1;
     const y = 1;
 
     readline.cursorTo(strm, x);
     readline.cursorTo(strm, x, y);
+    readline.cursorTo(strm, x, y, () => {}); // $ExpectType boolean
 }
 
 {
@@ -94,17 +115,20 @@ const rl: readline.ReadLine = readline.createInterface(new stream.Readable());
     const dy: number | string = 1;
 
     readline.moveCursor(strm, dx, dy);
+    readline.moveCursor(strm, dx, dy, () => {}); // $ExpectType boolean
 }
 
 {
     const strm: NodeJS.WritableStream = new stream.Writable();
     readline.clearLine(strm, 1);
+    readline.clearLine(strm, 1, () => {}); // $ExpectType boolean
 }
 
 {
     const strm: NodeJS.WritableStream = new stream.Writable();
 
     readline.clearScreenDown(strm);
+    readline.clearScreenDown(strm, () => {}); // $ExpectType boolean
 }
 
 {
@@ -122,54 +146,70 @@ const rl: readline.ReadLine = readline.createInterface(new stream.Readable());
     _rl = _rl.addListener("SIGCONT", () => { });
     _rl = _rl.addListener("SIGINT", () => { });
     _rl = _rl.addListener("SIGTSTP", () => { });
+    _rl = _rl.addListener("history", (history) => {
+        const _input: string[] = history;
+    });
 
-    _boolean = _rl.emit("close", () => { });
-    _boolean = _rl.emit("line", () => { });
-    _boolean = _rl.emit("pause", () => { });
-    _boolean = _rl.emit("resume", () => { });
-    _boolean = _rl.emit("SIGCONT", () => { });
-    _boolean = _rl.emit("SIGINT", () => { });
-    _boolean = _rl.emit("SIGTSTP", () => { });
+    _boolean = _rl.emit("close");
+    _boolean = _rl.emit("line");
+    _boolean = _rl.emit("pause");
+    _boolean = _rl.emit("resume");
+    _boolean = _rl.emit("SIGCONT");
+    _boolean = _rl.emit("SIGINT");
+    _boolean = _rl.emit("SIGTSTP");
+    _boolean = _rl.emit("history");
 
     _rl = _rl.on("close", () => { });
     _rl = _rl.on("line", (input) => {
-        const _input: any = input;
+        const _input: string = input;
     });
     _rl = _rl.on("pause", () => { });
     _rl = _rl.on("resume", () => { });
     _rl = _rl.on("SIGCONT", () => { });
     _rl = _rl.on("SIGINT", () => { });
     _rl = _rl.on("SIGTSTP", () => { });
+    _rl = _rl.on("history", (history) => {
+        const _input: string[] = history;
+    });
 
     _rl = _rl.once("close", () => { });
     _rl = _rl.once("line", (input) => {
-        const _input: any = input;
+        const _input: string = input;
     });
     _rl = _rl.once("pause", () => { });
     _rl = _rl.once("resume", () => { });
     _rl = _rl.once("SIGCONT", () => { });
     _rl = _rl.once("SIGINT", () => { });
     _rl = _rl.once("SIGTSTP", () => { });
+    _rl = _rl.once("history", (history) => {
+        const _input: string[] = history;
+    });
 
     _rl = _rl.prependListener("close", () => { });
     _rl = _rl.prependListener("line", (input) => {
-        const _input: any = input;
+        const _input: string = input;
     });
     _rl = _rl.prependListener("pause", () => { });
     _rl = _rl.prependListener("resume", () => { });
     _rl = _rl.prependListener("SIGCONT", () => { });
     _rl = _rl.prependListener("SIGINT", () => { });
     _rl = _rl.prependListener("SIGTSTP", () => { });
+    _rl = _rl.prependListener("history", (history) => {
+        const _input: string[] = history;
+    });
 
     _rl = _rl.prependOnceListener("close", () => { });
     _rl = _rl.prependOnceListener("line", (input) => {
-        const _input: any = input;
+        const _input: string = input;
     });
     _rl = _rl.prependOnceListener("pause", () => { });
     _rl = _rl.prependOnceListener("resume", () => { });
     _rl = _rl.prependOnceListener("SIGCONT", () => { });
     _rl = _rl.prependOnceListener("SIGINT", () => { });
     _rl = _rl.prependOnceListener("SIGTSTP", () => { });
+    _rl = _rl.prependOnceListener("history", (history) => {
+        const _input: string[] = history;
+    });
 }
 
 {
@@ -182,4 +222,11 @@ const rl: readline.ReadLine = readline.createInterface(new stream.Readable());
         //
         // }
     });
+}
+
+{
+    const rl = readline.createInterface({
+        input: process.stdin,
+    });
+    const pos: readline.CursorPos = rl.getCursorPos();
 }

@@ -25,12 +25,13 @@ declare namespace Listr {
 
     interface ListrEvent {
         type: string;
+        data?: string | boolean;
     }
 
     interface ListrTask<Ctx = ListrContext> {
         title: string;
         task: (ctx: Ctx, task: ListrTaskWrapper<Ctx>) => void | ListrTaskResult<Ctx>;
-        skip?: (ctx: Ctx) => void | boolean | string | Promise<boolean>;
+        skip?: (ctx: Ctx) => void | boolean | string | Promise<undefined | boolean | string>;
         enabled?: (ctx: Ctx) => boolean | Promise<boolean> | Observable<boolean>;
     }
 
@@ -38,16 +39,16 @@ declare namespace Listr {
         title: string;
         output?: string;
         task: (ctx: Ctx, task: ListrTaskWrapper<Ctx>) => void | ListrTaskResult<Ctx>;
-        skip: (ctx: Ctx) => void | boolean | string | Promise<boolean>;
+        skip: (ctx: Ctx) => void | boolean | string | Promise<undefined | boolean | string>;
         subtasks: ReadonlyArray<ListrTaskWrapper<Ctx>>;
         state: string;
         check: (ctx: Ctx) => void;
-        hasSubtasks: boolean;
-        isPending: boolean;
-        isSkipped: boolean;
-        isCompleted: boolean;
-        isEnabled: boolean;
-        hasFailed: boolean;
+        hasSubtasks(): boolean;
+        isPending(): boolean;
+        isSkipped(): boolean;
+        isCompleted(): boolean;
+        isEnabled(): boolean;
+        hasFailed(): boolean;
         run: (ctx: Ctx, wrapper: ListrTaskWrapper<Ctx>) => Promise<void>;
     }
 

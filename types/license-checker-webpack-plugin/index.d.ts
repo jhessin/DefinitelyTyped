@@ -2,12 +2,13 @@
 // Project: https://github.com/Microsoft/license-checker-webpack-plugin#readme
 // Definitions by: Joel Spadin <https://github.com/ChaosinaCan>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.3
+// TypeScript Version: 3.7
 
-import { Plugin } from 'webpack';
+import { Compiler, WebpackPluginInstance } from 'webpack';
 
-declare class LicenseCheckerWebpackPlugin extends Plugin {
+declare class LicenseCheckerWebpackPlugin implements WebpackPluginInstance {
     constructor(options?: Partial<LicenseCheckerWebpackPlugin.Options>);
+    apply(compiler: Compiler): void;
 }
 
 declare namespace LicenseCheckerWebpackPlugin {
@@ -18,6 +19,12 @@ declare namespace LicenseCheckerWebpackPlugin {
         licenseName: string;
         licenseText: string;
     }
+
+    interface OutputWriterArgs {
+        dependencies: Dependency[];
+    }
+
+    type OutputWriter = (args: OutputWriterArgs) => string;
 
     interface Options {
         /**
@@ -59,7 +66,7 @@ declare namespace LicenseCheckerWebpackPlugin {
          * Path to a `.ejs` template, or function that will generate the contents
          * of the third-party notices file.
          */
-        outputWriter: string | ((dependencies: Dependency[]) => string);
+        outputWriter: string | OutputWriter;
 
         /**
          * Name of the third-party notices file with all licensing information.

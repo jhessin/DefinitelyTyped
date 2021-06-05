@@ -1,16 +1,22 @@
-// Type definitions for node-forge 0.8.1
+// Type definitions for node-forge 0.9.1
 // Project: https://github.com/digitalbazaar/forge
-// Definitions by: Seth Westphal    <https://github.com/westy92>
-//                 Kay Schecker     <https://github.com/flynetworks>
-//                 Aakash Goenka    <https://github.com/a-k-g>
-//                 Rafal2228        <https://github.com/rafal2228>
-//                 Beeno Tung       <https://github.com/beenotung>
-//                 Joe Flateau      <https://github.com/joeflateau>
-//                 Nikita Koryabkin <https://github.com/Apologiz>
-//                 timhwang21       <https://github.com/timhwang21>
-//                 supaiku0         <https://github.com/supaiku0>
-//                 Anders Kaseorg   <https://github.com/andersk>
-//                 Sascha Zarhuber  <https://github.com/saschazar21>
+// Definitions by: Seth Westphal       <https://github.com/westy92>
+//                 Kay Schecker        <https://github.com/flynetworks>
+//                 Aakash Goenka       <https://github.com/a-k-g>
+//                 Rafal2228           <https://github.com/rafal2228>
+//                 Beeno Tung          <https://github.com/beenotung>
+//                 Joe Flateau         <https://github.com/joeflateau>
+//                 Nikita Koryabkin    <https://github.com/Apologiz>
+//                 timhwang21          <https://github.com/timhwang21>
+//                 supaiku0            <https://github.com/supaiku0>
+//                 Anders Kaseorg      <https://github.com/andersk>
+//                 Sascha Zarhuber     <https://github.com/saschazar21>
+//                 Rogier Schouten     <https://github.com/rogierschouten>
+//                 Ivan Aseev          <https://github.com/aseevia>
+//                 Wiktor Kwapisiewicz <https://github.com/wiktor-k>
+//                 Ligia Frangello     <https://github.com/frangello>
+//                 Dmitry Avezov       <https://github.com/avezov>
+//                 Jose Fuentes        <https://github.com/j-fuentes>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.6
 
@@ -31,6 +37,7 @@ declare module "node-forge" {
             t: number;
             s: number;
             toString(): string;
+            bitLength(): number;
         }
     }
 
@@ -65,6 +72,35 @@ declare module "node-forge" {
             legacy?: boolean;
         };
 
+        interface ByteBufferFingerprintOptions {
+            /**
+             * @description The type of fingerprint. If not specified, defaults to 'RSAPublicKey'
+             */
+            type?: 'SubjectPublicKeyInfo' | 'RSAPublicKey';
+            /**
+             * @description the delimiter to use between bytes for `hex` encoded output
+             */
+            delimiter?: string;
+            /**
+             * @description if not specified defaults to `md.md5`
+             */
+            md?: md.MessageDigest;
+        }
+
+        interface HexFingerprintOptions extends ByteBufferFingerprintOptions {
+            /**
+             * @description if not specified, the function will return `ByteStringBuffer`
+             */
+            encoding: 'hex';
+        }
+
+        interface BinaryFingerprintOptions extends ByteBufferFingerprintOptions {
+            /**
+             * @description if not specified, the function will return `ByteStringBuffer`
+             */
+            encoding: 'binary';
+        }
+
         interface KeyPair {
             publicKey: PublicKey;
             privateKey: PrivateKey;
@@ -74,10 +110,6 @@ declare module "node-forge" {
             [key: string]: string;
         }
         var oids: oids;
-
-        namespace ed25519 {
-            type Key = ArrayBuffer;
-        }
 
         namespace rsa {
             type EncryptionScheme = 'RSAES-PKCS1-V1_5' | 'RSA-OAEP' | 'RAW' | 'NONE' | null;
@@ -118,15 +150,25 @@ declare module "node-forge" {
                 algorithm?: string;
             }
 
-            function setPublicKey(n: any, e: any): any;
+            function setPublicKey(n: jsbn.BigInteger, e: jsbn.BigInteger): PublicKey;
 
             function generateKeyPair(bits?: number, e?: number, callback?: (err: Error, keypair: KeyPair) => void): KeyPair;
             function generateKeyPair(options?: GenerateKeyPairOptions, callback?: (err: Error, keypair: KeyPair) => void): KeyPair;
         }
 
         namespace ed25519 {
-
             type NativeBuffer = Buffer | Uint8Array;
+            type Key = NativeBuffer;
+
+            type ToNativeBufferParameters = {
+                message: NativeBuffer | util.ByteBuffer
+            } | {
+                message: string;
+                encoding: 'binary' | 'utf8';
+            };
+
+            // `string`s will be converted by toNativeBuffer with `encoding: 'binary'`
+            type BinaryBuffer = NativeBuffer | util.ByteBuffer | string;
 
             namespace constants {
                 const PUBLIC_KEY_BYTE_LENGTH = 32;
@@ -136,24 +178,21 @@ declare module "node-forge" {
                 const HASH_BYTE_LENGTH = 64;
             }
 
-            function generateKeyPair(options?: { seed?: Buffer | Uint8Array | string }): {
+            // generateKeyPair does not currently accept `util.ByteBuffer` as the seed.
+            function generateKeyPair(options?: { seed?: NativeBuffer | string }): {
                 publicKey: NativeBuffer;
                 privateKey: NativeBuffer;
             };
 
-            function publicKeyFromPrivateKey(options: { privateKey: NativeBuffer }): NativeBuffer;
+            function publicKeyFromPrivateKey(options: { privateKey: BinaryBuffer }): NativeBuffer;
 
-            function sign(options: {
-                message: string,
-                encoding: string,
-                privateKey: NativeBuffer
+            function sign(options: ToNativeBufferParameters & {
+                privateKey: BinaryBuffer
             }): NativeBuffer;
 
-            function verify(options: {
-                message: string,
-                encoding: string,
-                signature: Buffer | Uint8Array | util.ByteBuffer | string,
-                publicKey: NativeBuffer
+            function verify(options: ToNativeBufferParameters & {
+                signature: BinaryBuffer,
+                publicKey: BinaryBuffer
             }): boolean;
         }
 
@@ -244,6 +283,84 @@ declare module "node-forge" {
              */
             verify(child: Certificate): boolean;
 
+            /**
+             * Gets an issuer or subject attribute from its name, type, or short name.
+             *
+             * @param options a short name string or an object with:
+             *          shortName the short name for the attribute.
+             *          name the name for the attribute.
+             *          type the type for the attribute.
+             *
+             * @return the attribute.
+             */
+            getAttribute(opts: string | GetAttributeOpts): Attribute | null;
+
+            /**
+             * Returns true if this certificate's issuer matches the passed
+             * certificate's subject. Note that no signature check is performed.
+             *
+             * @param parent the certificate to check.
+             *
+             * @return true if this certificate's issuer matches the passed certificate's
+             *         subject.
+             */
+            isIssuer(parent: Certificate): boolean;
+
+            /**
+             * Returns true if this certificate's subject matches the issuer of the
+             * given certificate). Note that not signature check is performed.
+             *
+             * @param child the certificate to check.
+             *
+             * @return true if this certificate's subject matches the passed
+             *         certificate's issuer.
+             */
+            issued(child: Certificate): boolean;
+        }
+
+        /**
+         * Attribute members to search on; any one hit will return the attribute
+         */
+        interface GetAttributeOpts {
+            /**
+             * OID
+             */
+            type?: string;
+            /**
+             * Long name
+             */
+            name?: string;
+            /**
+             * Short name
+             */
+            shortName?: string;
+        }
+
+        interface Attribute {
+            /**
+             * e.g. challengePassword
+             */
+            name: string;
+            /**
+             * Short name, if available (e.g. 'CN' for 'commonName')
+             */
+            shortName?: string;
+            /**
+             * OID, e.g. '1.2.840.113549.1.9.7'
+             */
+            type: string;
+            /**
+             * Attribute value
+             */
+            value: any;
+            /**
+             * Attribute value data type
+             */
+            valueTagClass: number;
+            /**
+             * Extensions
+             */
+            extensions?: any[]
         }
 
         interface CAStore {
@@ -259,7 +376,7 @@ declare module "node-forge" {
 
         function certificateToAsn1(cert: Certificate): asn1.Asn1;
 
-        function decryptRsaPrivateKey(pem: PEM, passphrase?: string): PrivateKey;
+        function decryptRsaPrivateKey(pem: PEM, passphrase?: string): rsa.PrivateKey;
 
         function createCertificate(): Certificate;
 
@@ -275,7 +392,13 @@ declare module "node-forge" {
 
         function createCaStore(certs?: ReadonlyArray<Certificate | pki.PEM>): CAStore;
 
-        function verifyCertificateChain(caStore: CAStore, chain: Certificate[], customVerifyCallback?: (verified: boolean | string, depth: number, chain: Certificate[]) => boolean): boolean;
+        function verifyCertificateChain(
+            caStore: CAStore,
+            chain: Certificate[],
+            options?: ((verified: boolean | string, depth: number, certs: Certificate[]) => boolean) | {
+                verify?: (verified: boolean | string, depth: number, certs: Certificate[]) => boolean,
+                validityCheckDate?: Date | null
+            }): boolean;
 
         function pemToDer(pem: PEM): util.ByteStringBuffer;
 
@@ -285,9 +408,11 @@ declare module "node-forge" {
 
         function publicKeyToPem(key: PublicKey, maxline?: number): PEM;
 
-        function publicKeyFromPem(pem: PEM): PublicKey;
+        function publicKeyToRSAPublicKeyPem(key: PublicKey, maxline?: number): PEM;
 
-        function privateKeyFromPem(pem: PEM): PrivateKey;
+        function publicKeyFromPem(pem: PEM): rsa.PublicKey;
+
+        function privateKeyFromPem(pem: PEM): rsa.PrivateKey;
 
         function decryptPrivateKeyInfo(obj: asn1.Asn1, password: string): asn1.Asn1;
 
@@ -297,7 +422,7 @@ declare module "node-forge" {
 
         function encryptedPrivateKeyToPem(obj: asn1.Asn1): PEM;
 
-        function decryptRsaPrivateKey(pem: PEM, password: string): PrivateKey;
+        function decryptRsaPrivateKey(pem: PEM, password: string): rsa.PrivateKey;
 
         function encryptRsaPrivateKey(privateKey: PrivateKey, password: string, options?: EncryptionOptions): PEM;
 
@@ -311,9 +436,13 @@ declare module "node-forge" {
 
         function publicKeyToRSAPublicKey(publicKey: PublicKey): any;
 
-        function setRsaPublicKey(n: jsbn.BigInteger, e: jsbn.BigInteger): PublicKey;
+        type setRsaPublicKey = typeof rsa.setPublicKey;
 
         function wrapRsaPrivateKey(privateKey: asn1.Asn1): asn1.Asn1;
+
+        function getPublicKeyFingerprint(publicKey: PublicKey, options?: ByteBufferFingerprintOptions): util.ByteStringBuffer;
+        function getPublicKeyFingerprint(publicKey: PublicKey, options: HexFingerprintOptions): Hex;
+        function getPublicKeyFingerprint(publicKey: PublicKey, options: BinaryFingerprintOptions): Bytes;
     }
 
     namespace random {
@@ -522,10 +651,10 @@ declare module "node-forge" {
 
         interface Pkcs12Pfx {
             version: string;
-            safeContents: [{
+            safeContents: {
                 encrypted: boolean;
                 safeBags: Bag[];
-            }];
+            }[];
             getBags: (filter: BagsFilter) => {
                 [key: string]: Bag[] | undefined;
                 localKeyId?: Bag[];
@@ -582,6 +711,15 @@ declare module "node-forge" {
         }
 
         function createSignedData(): PkcsSignedData;
+
+        interface PkcsEnvelopedData {
+            content?: string | util.ByteBuffer;
+            addRecipient(certificate: pki.Certificate): void;
+            encrypt(): void;
+            toAsn1(): asn1.Asn1;
+        }
+
+        function createEnvelopedData(): PkcsEnvelopedData;
     }
 
     namespace pkcs5 {
@@ -624,7 +762,7 @@ declare module "node-forge" {
 
     namespace hmac {
 
-      type Algorithm = "sha1" | "md5" | "sha256";
+      type Algorithm = "sha1" | "md5" | "sha256" | "sha512";
 
       interface HMAC {
           digest(): util.ByteBuffer;

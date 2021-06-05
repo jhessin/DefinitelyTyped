@@ -1,10 +1,11 @@
 import { Oid } from './oid';
 import { TreeEntry } from './tree-entry';
 import { Repository } from './repository';
-import { Object } from './object';
 import { Treebuilder } from './tree-builder';
 import { DiffFile } from './diff-file';
 import { TreeUpdate } from './tree-update';
+import { Diff } from './diff';
+import { DiffOptions } from './diff-options';
 
 export namespace Tree {
     const enum WALK_MODE {
@@ -38,11 +39,11 @@ export class Tree {
     /**
      * Diff two trees
      */
-    diff(tree: Tree, callback?: Function): Promise<DiffFile[]>;
+    diff(tree: Tree, callback?: Function): Promise<Diff>;
     /**
      * Diff two trees with options
      */
-    diffWithOptions(tree: Tree, options?: Object, callback?: Function): Promise<DiffFile[]>;
+    diffWithOptions(tree: Tree | null, options?: DiffOptions, callback?: Function): Promise<Diff>;
     /**
      * Get an entry at the ith position.
      */
@@ -50,7 +51,7 @@ export class Tree {
     /**
      * Get an entry at a path. Unlike by name, this takes a fully qualified path, like /foo/bar/baz.javascript
      */
-    getEntry(filePath: string): TreeEntry;
+    getEntry(filePath: string): Promise<TreeEntry>;
     /**
      * Return an array of the entries in this tree (excluding its children).
      */

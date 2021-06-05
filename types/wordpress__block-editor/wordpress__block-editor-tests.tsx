@@ -15,6 +15,7 @@ const STYLES = [{ css: '.foo { color: red; }' }, { css: '.bar { color: blue; }',
 //
 // alignment-toolbar
 //
+<be.AlignmentToolbar value={undefined} onChange={newValue => newValue && console.log(newValue.toUpperCase())} />;
 <be.AlignmentToolbar value="left" onChange={newValue => newValue && console.log(newValue.toUpperCase())} />;
 <be.AlignmentToolbar
     alignmentControls={[{ align: 'center', icon: 'carrot', title: 'Center' }]}
@@ -25,6 +26,7 @@ const STYLES = [{ css: '.foo { color: red; }' }, { css: '.bar { color: blue; }',
 //
 // block-alignment-toolbar
 //
+<be.BlockAlignmentToolbar value={undefined} onChange={newValue => newValue && console.log(newValue.toUpperCase())} />;
 <be.BlockAlignmentToolbar value="left" onChange={newValue => newValue && console.log(newValue.toUpperCase())} />;
 <be.BlockAlignmentToolbar
     isCollapsed
@@ -63,6 +65,13 @@ const STYLES = [{ css: '.foo { color: red; }' }, { css: '.bar { color: blue; }',
 <be.BlockControls.Slot />;
 
 //
+// BlockEditorProvider
+//
+<be.BlockEditorProvider value={[]} settings={{ templateLock: 'all' }}>
+    <div />
+</be.BlockEditorProvider>;
+
+//
 // block-format-controls
 //
 <be.BlockFormatControls>Hello World</be.BlockFormatControls>;
@@ -73,6 +82,11 @@ const STYLES = [{ css: '.foo { color: red; }' }, { css: '.bar { color: blue; }',
 //
 <be.BlockIcon icon="carrot" />;
 <be.BlockIcon icon={<i>foo</i>} showColors />;
+
+//
+// block-list
+//
+<be.BlockList className="my-custom-class" />;
 
 //
 // block-mover

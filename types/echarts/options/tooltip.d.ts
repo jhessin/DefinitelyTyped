@@ -1,187 +1,7 @@
+// Type definitions for ECharts v4.7.0
 declare namespace echarts {
     namespace EChartOption {
-        interface Tooltip {
-            /**
-             * Whether to show the tooltip component,
-             * including tooltip floating layer and `axisPointer`.
-             *
-             * @default true
-             */
-            show?: boolean;
-
-            /**
-             * Type of triggering.
-             * Options:
-             * + `'item'` - Triggered by data item, which is mainly used
-             *   for charts that don't have a category axis like scatter
-             *   charts or pie charts.
-             * + `'axis'` - Triggered by axes, which is mainly used
-             *   for charts that have category axes, like bar charts
-             *   or line charts.
-             *   ECharts 2.x only supports axis trigger for category axis.
-             *   In ECharts 3, it is supported for all types of axes in `grid`
-             *   or `polar`. Also, you may assign axis with `axisPointer.axis`.
-             * + `'none'` - Trigger nothing.
-             *
-             * @default 'item'
-             */
-            trigger?: 'item' | 'axis' | 'none';
-
-            /**
-             * `axisPointer` is a tool for displaying reference line
-             * and axis value under mouse pointer.
-             *
-             * Configuration item for axis indicator.
-             * `tooltip.axisPointer` is like syntactic sugar
-             * of `axisPointer` settings on axes
-             * (for example, `xAxis.axisPointer` or `angleAxis.axisPointer`).
-             * More detailed features can be configured
-             * on `someAxis.axisPointer`.
-             * But in common cases, using `tooltip.axisPinter`
-             * is more convenient.
-             * Notice: configurations of `tooltip.axisPointer` has
-             * lower priority than that of `someAxis.axisPointer`.
-             *
-             * @see https://ecomfe.github.io/echarts-doc/public/en/option.html#tooltip.axisPointer
-             */
-            axisPointer?: {
-                /**
-                 * Indicator type.
-                 * Options:
-                 * + 'line' line indicator.
-                 * + 'shadow' shadow crosshair indicator.
-                 * + 'none' no indicator displayed.
-                 * + 'cross' crosshair indicator, which is actually
-                 *   the shortcut of enable two axisPointers
-                 *   of two orthometric axes.
-                 *
-                 * @default 'line'
-                 */
-                type?: 'line' | 'shadow' | 'none' | 'cross';
-
-                /**
-                 * By default, each coordinate system will automatically
-                 * chose the axes whose will display its axisPointer
-                 * (category axis or time axis is used by default).
-                 */
-                axis?: 'x' | 'y' | 'radius' | 'angle';
-
-                /**
-                 * Whether snap to point automatically.
-                 * The default value is auto determined.
-                 * This feature usually makes sense in value axis
-                 * and time axis, where tiny points
-                 * can be seeked automatically.
-                */
-                snap?: boolean;
-
-                /**
-                 * `z` value, which controls order of drawing
-                 * graphical components.
-                 * Components with smaller `z` values may be overwritten
-                 * by those with larger `z` values.
-                 */
-                z?: number;
-            };
-
-            /**
-             * Whether to show the tooltip floating layer,
-             * whose default value is true.
-             * It should be configurated to be `false`,
-             * if you only need tooltip to trigger the event
-             * or show the axisPointer without content.
-             *
-             * @default true
-             */
-            showContent?: boolean;
-
-            /**
-             * Whether to show tooltip content all the time.
-             * By default, it will be hidden after `tooltip.hideDelay`.
-             * It can be set to be true to preserve displaying.
-             * This attribute is newly added to ECharts 3.0.
-             *
-             * @default false
-             */
-            alwaysShowContent?: boolean;
-
-            /**
-             * Conditions to trigger tooltip.
-             * Options:
-             * + `'mousemove'` - Trigger when mouse moves.
-             * + `'click'` - Trigger when mouse clicks.
-             * + `'mousemove|click'` - Trigger when mouse clicks and moves.
-             *   `'none'` - Do not triggered by `'mousemove'` and `'click'`.
-             *   Tooltip can be triggered and hidden manually by calling
-             *   `action.tooltip.showTip` and `action.tooltip.hideTip`.
-             *   It can also be triggered by `axisPointer.handle` in this case.
-             *
-             * This attribute is new to ECharts 3.0.
-             *
-             * @default 'mousemove|click'
-             */
-            triggerOn?: 'mousemove' | 'click' | 'mousemove|click' | 'none';
-
-            /**
-             * Delay time for showing tooltip, in ms.
-             * No delay by default, and it is not recommended to set.
-             * Only valid when `triggerOn` is set to be `'mousemove'`.
-             *
-             * @default 0
-             */
-            showDelay?: number;
-
-            /**
-             * Delay time for hiding tooltip, in ms.
-             * It will be invalid when `alwaysShowContent` is `true`.
-             *
-             * @default 100
-             */
-            hideDelay?: number;
-
-            /**
-             * Whether mouse is allowed to enter the floating layer
-             * of tooltip, whose default value is false.
-             * If you need to interact in the tooltip like with links
-             * or buttons, it can be set as `true`.
-             *
-             * @default true
-             */
-            enterable?: boolean;
-
-            /**
-             * Render mode for tooltip.
-             * By default, it is set to be `'html'` so that extra DOM element
-             * is used for tooltip.
-             * It can also set to be `'richText'` so that the tooltip
-             * will be rendered inside Canvas (SVG rich text is
-             * not implemented yet).
-             * This is very useful for environments that don't have DOM,
-             * such as Wechat applications.
-             *
-             * @default 'html'
-             */
-            renderMode?: 'html';
-
-            /**
-             * Whether confine tooltip content in the view rect
-             * of chart instance.
-             * Useful when tooltip is cut because of `'overflow: hidden'`
-             * set on outer dom of chart instance, or because of narrow
-             * screen on mobile.
-             *
-             * @default false
-             */
-            confine?: boolean;
-
-            /**
-             * The transition duration of tooltip's animation, in seconds.
-             * When it is set to be 0, it would move closely with the mouse.
-             *
-             * @default 0.4
-             */
-            transitionDuration?: number;
-
+        interface BaseTooltip {
             /**
              * The position of the tooltip's floating layer,
              * which would follow the position of mouse by default.
@@ -221,7 +41,7 @@ declare namespace echarts {
              *   + Return:
              *     position as `String`, `Array` or `Object` described above
              *
-             * @see https://ecomfe.github.io/echarts-doc/public/en/option.html#tooltip.position
+             * @see https://echarts.apache.org/en/option.html#tooltip.position
              */
             position?: Tooltip.Position.Type;
 
@@ -333,12 +153,12 @@ declare namespace echarts {
              *
              * @default 5
              */
-            padding?: number;
+            padding?: number | number[];
 
             /**
              * The text style of tooltip's floating layer.
              */
-            textStyle?: {};
+            textStyle?: BaseTextStyle;
 
             /**
              * Extra CSS style for floating layer.
@@ -350,11 +170,177 @@ declare namespace echarts {
             extraCssText?: string;
         }
 
+        interface Tooltip extends BaseTooltip {
+            /**
+             * Whether to show the tooltip component,
+             * including tooltip floating layer and `axisPointer`.
+             *
+             * @default true
+             */
+            show?: boolean;
+
+            /**
+             * Type of triggering.
+             * Options:
+             * + `'item'` - Triggered by data item, which is mainly used
+             *   for charts that don't have a category axis like scatter
+             *   charts or pie charts.
+             * + `'axis'` - Triggered by axes, which is mainly used
+             *   for charts that have category axes, like bar charts
+             *   or line charts.
+             *   ECharts 2.x only supports axis trigger for category axis.
+             *   In ECharts 3, it is supported for all types of axes in `grid`
+             *   or `polar`. Also, you may assign axis with `axisPointer.axis`.
+             * + `'none'` - Trigger nothing.
+             *
+             * @default 'item'
+             */
+            trigger?: "item" | "axis" | "none";
+
+            /**
+             * `axisPointer` is a tool for displaying reference line
+             * and axis value under mouse pointer.
+             *
+             * Configuration item for axis indicator.
+             * `tooltip.axisPointer` is like syntactic sugar
+             * of `axisPointer` settings on axes
+             * (for example, `xAxis.axisPointer` or `angleAxis.axisPointer`).
+             * More detailed features can be configured
+             * on `someAxis.axisPointer`.
+             * But in common cases, using `tooltip.axisPinter`
+             * is more convenient.
+             * Notice: configurations of `tooltip.axisPointer` has
+             * lower priority than that of `someAxis.axisPointer`.
+             *
+             * @see https://echarts.apache.org/en/option.html#tooltip.axisPointer
+             */
+            axisPointer?: Tooltip.AxisPointer;
+
+            /**
+             * Whether to show the tooltip floating layer,
+             * whose default value is true.
+             * It should be configurated to be `false`,
+             * if you only need tooltip to trigger the event
+             * or show the axisPointer without content.
+             *
+             * @default true
+             */
+            showContent?: boolean;
+
+            /**
+             * Whether to show tooltip content all the time.
+             * By default, it will be hidden after `tooltip.hideDelay`.
+             * It can be set to be true to preserve displaying.
+             * This attribute is newly added to ECharts 3.0.
+             *
+             * @default false
+             */
+            alwaysShowContent?: boolean;
+
+            /**
+             * Conditions to trigger tooltip.
+             * Options:
+             * + `'mousemove'` - Trigger when mouse moves.
+             * + `'click'` - Trigger when mouse clicks.
+             * + `'mousemove|click'` - Trigger when mouse clicks and moves.
+             *   `'none'` - Do not triggered by `'mousemove'` and `'click'`.
+             *   Tooltip can be triggered and hidden manually by calling
+             *   `action.tooltip.showTip` and `action.tooltip.hideTip`.
+             *   It can also be triggered by `axisPointer.handle` in this case.
+             *
+             * This attribute is new to ECharts 3.0.
+             *
+             * @default 'mousemove|click'
+             */
+            triggerOn?: "mousemove" | "click" | "mousemove|click" | "none";
+
+            /**
+             * Delay time for showing tooltip, in ms.
+             * No delay by default, and it is not recommended to set.
+             * Only valid when `triggerOn` is set to be `'mousemove'`.
+             *
+             * @default 0
+             */
+            showDelay?: number;
+
+            /**
+             * Delay time for hiding tooltip, in ms.
+             * It will be invalid when `alwaysShowContent` is `true`.
+             *
+             * @default 100
+             */
+            hideDelay?: number;
+
+            /**
+             * Whether mouse is allowed to enter the floating layer
+             * of tooltip, whose default value is false.
+             * If you need to interact in the tooltip like with links
+             * or buttons, it can be set as `true`.
+             *
+             * @default true
+             */
+            enterable?: boolean;
+
+            /**
+             * Render mode for tooltip.
+             * By default, it is set to be `'html'` so that extra DOM element
+             * is used for tooltip.
+             * It can also set to be `'richText'` so that the tooltip
+             * will be rendered inside Canvas (SVG rich text is
+             * not implemented yet).
+             * This is very useful for environments that don't have DOM,
+             * such as Wechat applications.
+             *
+             * @default 'html'
+             */
+            renderMode?: "html";
+
+            /**
+             * Whether confine tooltip content in the view rect
+             * of chart instance.
+             * Useful when tooltip is cut because of `'overflow: hidden'`
+             * set on outer dom of chart instance, or because of narrow
+             * screen on mobile.
+             *
+             * @default false
+             */
+            confine?: boolean;
+
+            /**
+             * The transition duration of tooltip's animation, in seconds.
+             * When it is set to be 0, it would move closely with the mouse.
+             *
+             * @default 0.4
+             */
+            transitionDuration?: number;
+
+            /**
+             * Since v4.7.0
+             *
+             * Whether to append the tooltip DOM element as a child of the <body> of the HTML page,
+             * when using renderMode 'html'.
+             * By default false, means that the tooltip DOM element will be one of a descendant
+             * of its echarts DOM container.
+             * But that means that the tooltip might be cut when overflow the container
+             * if some of the ancestors DOM element of the echarts container are styled with overflow: hidden.
+             * This case could also be resolved by setting tooltip.confine, but it might not suitable for all scenarios.
+             * Here we provide appendToBody: true to auto append the tooltip element to <body>,
+             * which is a common way to resolve this kind of issue.
+             * But true is not set as a default value because to void to bring break change
+             * for some cases where tooltip is deeply customized and to void some unexpected bad cases.
+             *
+             * Note that it also works when CSS transform used.
+             *
+             * @default false
+             */
+            appendToBody?: boolean;
+        }
+
         namespace Tooltip {
             namespace Position {
                 type Type = Position.Str | Position.Obj | (number | string)[] | Position.Fn;
 
-                type Str = 'inside' | 'top' | 'left' | 'right' | 'bottom';
+                type Str = "inside" | "top" | "left" | "right" | "bottom";
 
                 interface Obj {
                     top?: string | number;
@@ -401,15 +387,11 @@ declare namespace echarts {
              * }
              */
             interface Formatter {
-                (
-                    params: Format | Format[],
-                    ticket: string,
-                    callback: (ticket: string, html: string) => void,
-                ): string;
+                (params: Format | Format[], ticket: string, callback: (ticket: string, html: string) => void): string;
             }
 
             interface Format {
-                componentType?: 'series';
+                componentType?: "series";
 
                 // Series type
                 seriesType?: string;
@@ -419,6 +401,9 @@ declare namespace echarts {
 
                 // Series name
                 seriesName?: string;
+
+                // item marker, string of HTMLElement
+                marker?: string;
 
                 // Data name, or category name
                 name?: string;
@@ -432,11 +417,60 @@ declare namespace echarts {
                 // Value of data
                 value?: number | any[];
 
+                // Value of axis
+                axisValue?: number | string;
+
+                // Label of axis value
+                axisValueLabel?: string;
+
+                // encoding info of coordinate system
+                // Key: coord, like ('x' 'y' 'radius' 'angle')
+                // value: Must be an array, not null/undefined. Contain dimension indices, like:
+                // {
+                //     x: [2] // values on dimension index 2 are mapped to x axis.
+                //     y: [0] // values on dimension index 0 are mapped to y axis.
+                // }
+                encode?: object;
+
+                // dimension names list
+                dimensionNames?: string[];
+
+                // data dimension index, for example 0 or 1 or 2 ...
+                // Only work in `radar` series.
+                dimensionIndex?: number;
+
                 // Color of data
                 color?: string;
 
                 // the percentage of pie chart
                 percent?: number;
+            }
+            interface AxisPointer {
+                show?: boolean;
+                type?: "line" | "shadow" | "none" | "cross";
+                axis?: "auto" | "x" | "y" | "radius" | "angle";
+                snap?: boolean;
+                z?: number;
+                label?: BasicComponents.CartesianAxis.PointerLabel;
+                lineStyle?: LineStyle;
+                shadowStyle?: {
+                    color?: string;
+                    shadowBlur?: number;
+                    shadowColor?: string;
+                    shadowOffsetX?: number;
+                    shadowOffsetY?: number;
+                    opacity?: number;
+                };
+                // It is valid when axisPointer.type is 'cross'.
+                crossStyle?: LineStyle;
+                animation?: boolean;
+                animationThreshold?: number;
+                animationDuration?: number;
+                animationEasing?: string;
+                animationDelay?: number | Function;
+                animationDurationUpdate?: number | Function;
+                animationEasingUpdate?: string;
+                animationDelayUpdate?: number | Function;
             }
         }
     }

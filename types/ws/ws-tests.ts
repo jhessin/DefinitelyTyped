@@ -1,6 +1,7 @@
 import WebSocket = require('ws');
 import * as http from 'http';
 import * as https from 'https';
+import * as url from 'url';
 
 {
     const ws = new WebSocket('ws://www.host.com/path');
@@ -9,7 +10,8 @@ import * as https from 'https';
 }
 
 {
-    const ws = new WebSocket('ws://www.host.com/path');
+    const addr = new url.URL('ws://www.host.com/path');
+    const ws = new WebSocket(addr);
     ws.on('open', () => {
         const array = new Float32Array(5);
         for (let i = 0; i < array.length; ++i) array[i] = i / 2;
@@ -25,9 +27,11 @@ import * as https from 'https';
         ws.send('something', (error?: Error) => {});
         ws.send('something', {}, (error?: Error) => {});
     });
-
-    wss.on('upgrade', (res) => {
-        console.log(`response: ${Object.keys(res)}`);
+    wss.once('connection', (ws, req) => {
+        ws.send('something');
+    });
+    wss.off('connection', (ws, req) => {
+        ws.send('something');
     });
 }
 
@@ -81,6 +85,22 @@ import * as https from 'https';
 }
 
 {
+    const wss = new WebSocket.Server();
+
+    wss.addListener('connection', (client, request) => {
+        request.socket.remoteAddress;
+
+        // $ExpectError
+        request.aborted === 10;
+
+        client.terminate();
+        request.destroy();
+    });
+
+    wss.close();
+}
+
+{
     new WebSocket.Server({ noServer: true, perMessageDeflate: false });
     new WebSocket.Server({ noServer: true, perMessageDeflate: { } });
     new WebSocket.Server({
@@ -100,17 +120,110 @@ import * as https from 'https';
                 strategy: 0,
                 dictionary: new Buffer('test'),
                 info: false
+            },
+            zlibInflateOptions: {
+                chunkSize: 0
             }
         },
         verifyClient: (info: any, cb: any) => {
-            cb(true, 123, 'message', { Upgrade: "websocket" });
-        }
+            cb(true, 123, 'message', { Upgrade: 'websocket' });
+        },
     });
 }
 
 {
     const ws = new WebSocket('ws://www.host.com/path', {
+        timeout: 5000,
         maxPayload: 10 * 1024 * 1024
     });
     ws.on('open', () => ws.send('something assume to be really long'));
+}
+
+{
+    const ws = new WebSocket('ws://www.host.com/path');
+    ws.onopen = (event: WebSocket.OpenEvent) => {
+        console.log(event.target);
+    };
+    ws.onerror = (event: WebSocket.ErrorEvent) => {
+        console.log(event.error, event.message, event.target, event.type);
+    };
+    ws.onclose = (event: WebSocket.CloseEvent) => {
+        console.log(event.code, event.reason, event.target, event.wasClean);
+    };
+    ws.onmessage = (event: WebSocket.MessageEvent) => {
+        console.log(event.data, event.target, event.type);
+    };
+}
+
+{
+    const ws = new WebSocket('ws://www.host.com/path');
+
+    const duplex = WebSocket.createWebSocketStream(ws, {
+        allowHalfOpen: true
+    });
+
+    duplex.pipe(process.stdout);
+    process.stdin.pipe(duplex);
+}
+
+{
+    const ws = new WebSocket('ws://www.host.com/path');
+
+    const duplex = WebSocket.createWebSocketStream(ws);
+
+    duplex.pipe(process.stdout);
+    process.stdin.pipe(duplex);
+}
+
+{
+    const ws = new WebSocket('ws://www.host.com/path');
+    ws.addEventListener('other', () => {});
+    ws.addEventListener('other', () => {}, { once: true });
+    ws.addEventListener('other', () => {}, { once: true });
+}
+
+{
+    const ws = new WebSocket('ws://www.host.com/path');
+    ws.addEventListener('message', (event: WebSocket.MessageEvent) => {
+            console.log(event.data, event.target, event.type);
+    }, { once: true });
+}
+
+{
+    const ws = new WebSocket('ws://www.host.com/path');
+    const eventHandler: Parameters<typeof ws.once>[1] = () => {};
+    const event = '';
+    const errorHandler = (err: Error) => {
+        ws.off(event, eventHandler);
+    };
+    ws.once('error', errorHandler);
+}
+
+function f() {
+    const ws = new WebSocket('ws://www.host.com/path');
+
+    // $ExpectError
+    const a: 5 = ws.readyState;
+
+    if (ws.readyState === ws.OPEN) {
+        // $ExpectError
+        const a: 2 = ws.readyState;
+        const x: 1 = ws.readyState;
+        return;
+    }
+    if (ws.readyState === ws.CONNECTING) {
+        const x: 0 = ws.readyState;
+        return;
+    }
+    if (ws.readyState === ws.CLOSING) {
+        const x: 2 = ws.readyState;
+        return;
+    }
+    if (ws.readyState === ws.CLOSED) {
+        const x: 3 = ws.readyState;
+        return;
+    }
+
+    // $ExpectType never
+    const x: never = ws.readyState;
 }
